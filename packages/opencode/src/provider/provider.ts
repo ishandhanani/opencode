@@ -222,6 +222,16 @@ export namespace Provider {
           },
           options: {},
         }),
+      dynamo: () =>
+        Effect.succeed({
+          autoload: true,
+          async getModel(sdk: any, modelID: string, _options?: Record<string, any>) {
+            if (typeof sdk.chatModel === "function") return sdk.chatModel(modelID)
+            if (typeof sdk.languageModel === "function") return sdk.languageModel(modelID)
+            return sdk(modelID)
+          },
+          options: {},
+        }),
       "github-copilot": () =>
         Effect.succeed({
           autoload: false,

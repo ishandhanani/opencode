@@ -43,6 +43,7 @@ import { AppFileSystem } from "@/filesystem"
 import { Truncate } from "@/tool/truncate"
 import { decodeDataUrl } from "@/util/data-url"
 import { Process } from "@/util/process"
+import { DynamoSessionRegistry } from "@/provider/dynamo-sessions"
 import { Cause, Effect, Exit, Layer, Option, Scope, Context } from "effect"
 import { EffectLogger } from "@/effect/logger"
 import { InstanceState } from "@/effect/instance-state"
@@ -1524,6 +1525,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           }
 
           yield* compaction.prune({ sessionID }).pipe(Effect.ignore, Effect.forkIn(scope))
+          yield* Effect.promise(() => DynamoSessionRegistry.close(sessionID))
           return yield* lastAssistant(sessionID)
         },
       )

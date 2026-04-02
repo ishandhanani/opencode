@@ -9,6 +9,7 @@ import type { SessionPrompt } from "../session/prompt"
 import { Config } from "../config/config"
 import { Effect } from "effect"
 import { Log } from "@/util/log"
+import { DynamoSessionRegistry } from "@/provider/dynamo-sessions"
 
 export interface TaskPromptOps {
   cancel(sessionID: SessionID): void
@@ -144,6 +145,9 @@ export const TaskTool = Tool.define(
               },
               parts,
             })
+
+            // Close dynamo session for this subagent (if active)
+            await DynamoSessionRegistry.close(nextSession.id)
 
             return {
               title: params.description,

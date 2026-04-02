@@ -4,6 +4,29 @@
     "opencode": {
       "options": {},
     },
+    "dynamo": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Dynamo",
+      "env": ["DYNAMO_API_KEY"],
+      "models": {
+        "zai-org/GLM-4.7-Flash": {
+          "id": "zai-org/GLM-4.7-Flash",
+          "name": "GLM 4.7 Flash",
+          "tool_call": true,
+          "reasoning": true,
+          "temperature": true,
+          "attachment": false,
+          "release_date": "2025-06-01",
+          "limit": { "context": 131072, "output": 8192 },
+          "cost": { "input": 0, "output": 0 },
+          "options": {},
+          "interleaved": { "field": "reasoning_content" }
+        }
+      },
+      "options": {
+        "baseURL": "http://localhost:8000/v1"
+      }
+    },
   },
   "permission": {
     "edit": {

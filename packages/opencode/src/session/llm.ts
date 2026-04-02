@@ -21,6 +21,7 @@ import { Wildcard } from "@/util/wildcard"
 import { SessionID } from "@/session/schema"
 import { Auth } from "@/auth"
 import { Installation } from "@/installation"
+import { DynamoSessionRegistry } from "@/provider/dynamo-sessions"
 
 export namespace LLM {
   const log = Log.create({ service: "llm" })
@@ -355,7 +356,20 @@ export namespace LLM {
       temperature: params.temperature,
       topP: params.topP,
       topK: params.topK,
-      providerOptions: ProviderTransform.providerOptions(input.model, params.options),
+      providerOptions: (() => {
+        const base = ProviderTransform.providerOptions(input.model, params.options)
+        if (input.model.providerID === "dynamo" && input.agent.mode === "subagent") {
+          const state = DynamoSessionRegistry.getOrCreate(input.sessionID)
+          state.modelId = input.model.id
+          const nvext = state.nvextForTurn()
+          base["dynamo"] = {
+            ...(base["dynamo"] as Record<string, any> | undefined),
+            nvext,
+          }
+          l.info("dynamo nvext", { sessionID: input.sessionID, agent: input.agent.name, nvext: JSON.stringify(nvext) })
+        }
+        return base
+      })(),
       activeTools: Object.keys(tools).filter((x) => x !== "invalid"),
       tools,
       toolChoice: input.toolChoice,
