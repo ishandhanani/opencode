@@ -493,10 +493,12 @@ import { lazy } from "@/util/lazy"
 
 const rt = lazy(() => {
   // Dynamic import to avoid circular dep: cross-spawn-spawner → run-service → Instance → project → cross-spawn-spawner
-  const { makeRuntime } = require("@/effect/run-service") as typeof import("@/effect/run-service")
-  return makeRuntime(ChildProcessSpawner, defaultLayer)
+  return import("@/effect/run-service").then(({ makeRuntime }) => makeRuntime(ChildProcessSpawner, defaultLayer))
 })
 
-export const runPromiseExit: ReturnType<typeof rt>["runPromiseExit"] = (...args) =>
-  rt().runPromiseExit(...(args as [any]))
-export const runPromise: ReturnType<typeof rt>["runPromise"] = (...args) => rt().runPromise(...(args as [any]))
+type Runtime = Awaited<ReturnType<typeof rt>>
+
+export const runPromiseExit: Runtime["runPromiseExit"] = (...args) =>
+  rt().then((runtime) => runtime.runPromiseExit(...(args as [any])))
+export const runPromise: Runtime["runPromise"] = (...args) =>
+  rt().then((runtime) => runtime.runPromise(...(args as [any])))
