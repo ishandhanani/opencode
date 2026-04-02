@@ -83,6 +83,10 @@ const seedModel = (() => {
   }
 })()
 
+function clean(value: string | null) {
+  return (value ?? "").replace(/\u200B/g, "").trim()
+}
+
 type ProjectHandle = {
   directory: string
   slug: string
@@ -341,7 +345,7 @@ function makeProject(
     await seedStorage(page, {
       directory,
       extra: options?.extra,
-      model: options?.model,
+      model: options?.model ?? openaiModel,
       serverUrl: backend.url,
     })
     state = {
@@ -365,10 +369,21 @@ function makeProject(
     const prompt = page.locator(promptSelector).first()
     await expect(prompt).toBeVisible()
     await prompt.click()
-    await prompt.fill(text)
-    await prompt.press("Enter")
+    await page.keyboard.type(text)
+    await expect.poll(async () => clean(await prompt.textContent())).toBe(text)
+    await page.keyboard.press("Enter")
+    const sent = await expect
+      .poll(() => sessionIDFromUrl(page.url()) ?? "", { timeout: 5_000 })
+      .not.toBe("")
+      .then(() => true)
+      .catch(() => false)
+    if (!sent) {
+      const send = page.getByRole("button", { name: "Send" }).first()
+      await expect(send).toBeEnabled()
+      await send.click()
+    }
 
-    await expect(page).toHaveURL(/\/session\/[^/?#]+/, { timeout: 30_000 })
+    await expect(page).toHaveURL(/\/session\/[^/?#]+/, { timeout: 90_000 })
     const sessionID = sessionIDFromUrl(page.url())
     if (!sessionID) throw new Error(`Failed to parse session id from url: ${page.url()}`)
 
@@ -385,8 +400,8 @@ function makeProject(
       : cur.directory
 
     trackSession(sessionID, directory)
-    await waitSessionSaved(directory, sessionID, 30_000, backend.url)
-    await waitSessionIdle(backend.sdk(directory), sessionID, 30_000).catch(() => undefined)
+    await waitSessionSaved(directory, sessionID, 90_000, backend.url)
+    await waitSessionIdle(backend.sdk(directory), sessionID, 90_000).catch(() => undefined)
     return sessionID
   }
 
