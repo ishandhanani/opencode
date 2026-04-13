@@ -147,7 +147,7 @@ export const TaskTool = Tool.define(
             })
 
             // Close dynamo session for this subagent (if active)
-            await DynamoSessionRegistry.close(nextSession.id)
+            yield* Effect.promise(() => DynamoSessionRegistry.close(nextSession.id))
 
             return {
               title: params.description,
