@@ -34,7 +34,7 @@ export namespace Dynamo {
   }
 
   export const defaultConfig: NvExtConfig = {
-    sessionTimeout: 60,
+    sessionTimeout: parseInt(process.env.DYNAMO_SESSION_TIMEOUT ?? "300", 10),
     extraFields: ["worker_id"],
   }
 
